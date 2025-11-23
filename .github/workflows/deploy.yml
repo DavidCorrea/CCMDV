@@ -34,11 +34,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Debug env in build step
+        run: |
+          echo "Keys present in env:"
+          env | grep YOUTUBE || echo "No YOUTUBE vars found"
+        env:
+          PUBLIC_YOUTUBE_API_KEY: ${{ secrets.PUBLIC_YOUTUBE_API_KEY }}
+          PUBLIC_YOUTUBE_CHANNEL_ID: ${{ secrets.PUBLIC_YOUTUBE_CHANNEL_ID }}  
+
       - name: Build Astro site
         run: npm run build
         env:
           PUBLIC_YOUTUBE_API_KEY: ${{ secrets.PUBLIC_YOUTUBE_API_KEY }}
           PUBLIC_YOUTUBE_CHANNEL_ID: ${{ secrets.PUBLIC_YOUTUBE_CHANNEL_ID }}
+      
 
       # ⬇️ NEW: upload the built site as a Pages artifact
       - name: Upload artifact for GitHub Pages
