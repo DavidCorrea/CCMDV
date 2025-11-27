@@ -8,8 +8,8 @@ export const translations = {
     },
     nav: {
       home: 'Inicio',
-      about: 'Acerca de',
-      services: 'Servicios',
+      about: 'Nosotros',
+      activities: 'Actividades',
       contact: 'Contacto',
       live: 'En Vivo',
     },
@@ -55,18 +55,13 @@ export const translations = {
         button: 'Contáctanos',
       },
     },
-    services: {
-      title: 'Nuestros Servicios',
-      description: 'Información sobre nuestros servicios y actividades',
-      subtitle: 'Únete a nosotros en nuestros servicios y actividades semanales',
+    activities: {
+      title: 'Nuestras Actividades',
+      description: 'Información sobre nuestras actividades',
+      subtitle: 'Únete a nosotros en nuestras actividades semanales',
       time: 'Horario',
       items: [
-        {
-          title: 'Servicio Dominical',
-          description: 'Nuestro servicio principal de adoración donde nos reunimos para alabar, adorar y escuchar la Palabra de Dios. Un tiempo de comunión y crecimiento espiritual para toda la familia.',
-          time: 'Domingos 10:00 AM',
-        },
-        {
+        { 
           title: 'Estudio Bíblico',
           description: 'Grupos pequeños donde estudiamos la Biblia en profundidad, compartimos nuestras experiencias y nos apoyamos mutuamente en nuestro caminar con Cristo.',
           time: 'Miércoles 7:00 PM',
@@ -153,7 +148,7 @@ export const translations = {
   //   nav: {
   //     home: 'Home',
   //     about: 'About',
-  //     services: 'Services',
+  //     activities: 'Activities',
   //     contact: 'Contact',
   //   },
   //   common: {

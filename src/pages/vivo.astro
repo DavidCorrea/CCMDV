@@ -98,16 +98,21 @@ if (youtubeApiKey && youtubeChannelId) {
               rel="noopener noreferrer"
               class="group bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <div class="relative w-full" style="padding-bottom: 56.25%; background-color: #e5e7eb;">
+              <div 
+                class="relative w-full bg-cover bg-center bg-gray-200 overflow-hidden"
+                style={`padding-bottom: 56.25%; background-image: url('${video.thumbnail}');`}
+                role="img"
+                aria-label={video.title}
+              >
                 <img
                   src={video.thumbnail}
-                  alt={video.title}
-                  class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  alt=""
+                  class="sr-only"
                   loading="lazy"
-                  onerror={`this.onerror=null; this.src='https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg'`}
                 />
-                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity">
-                  <svg class="w-16 h-16 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-25 transition-opacity duration-300"></div>
+                  <svg class="w-16 h-16 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
                 </div>

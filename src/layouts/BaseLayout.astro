@@ -40,10 +40,10 @@ const showLanguageSwitcher = supportedLanguages.length > 1;
           <div class="hidden md:flex items-center gap-4">
             <ul class="flex gap-6">
               <li><a href={getLocalizedPath('/', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.home}</a></li>
-              <li><a href={getLocalizedPath('/about', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.about}</a></li>
-              <li><a href={getLocalizedPath('/services', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.services}</a></li>
-              <li><a href={getLocalizedPath('/live', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.live}</a></li>
-              <li><a href={getLocalizedPath('/contact', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.contact}</a></li>
+              <li><a href={getLocalizedPath('/nosotros', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.about}</a></li>
+              <li><a href={getLocalizedPath('/actividades', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.activities}</a></li>
+              <li><a href={getLocalizedPath('/vivo', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.live}</a></li>
+              <li><a href={getLocalizedPath('/contacto', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.contact}</a></li>
             </ul>
             <!-- Language Switcher -->
             {showLanguageSwitcher && (
@@ -86,10 +86,10 @@ const showLanguageSwitcher = supportedLanguages.length > 1;
         <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-gray-200">
           <ul class="flex flex-col gap-4 pt-4">
             <li><a href={getLocalizedPath('/', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.home}</a></li>
-            <li><a href={getLocalizedPath('/about', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.about}</a></li>
-            <li><a href={getLocalizedPath('/services', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.services}</a></li>
-            <li><a href={getLocalizedPath('/live', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.live}</a></li>
-            <li><a href={getLocalizedPath('/contact', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.contact}</a></li>
+            <li><a href={getLocalizedPath('/nosotros', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.about}</a></li>
+            <li><a href={getLocalizedPath('/actividades', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.activities}</a></li>
+            <li><a href={getLocalizedPath('/vivo', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.live}</a></li>
+            <li><a href={getLocalizedPath('/contacto', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.contact}</a></li>
           </ul>
           <!-- Mobile Language Switcher -->
           {showLanguageSwitcher && (
