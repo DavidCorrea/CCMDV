@@ -82,21 +82,24 @@ export default async (request: Request, context: { next: () => Promise<Response>
                 const statsData = await statsResponse.json();
                 const statsMap = new Map(statsData.items.map((item: any) => [item.id, item]));
                 
-                recentVideos = playlistData.items.map((item: any) => {
-                  const videoId = item.snippet.resourceId.videoId;
-                  const stats: any = statsMap.get(videoId);
-                  
-                  return {
-                    id: videoId,
-                    videoId: videoId,
-                    title: item.snippet.title || 'Sin título',
-                    description: item.snippet.description || '',
-                    thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-                    publishedAt: item.snippet.publishedAt,
-                    viewCount: (stats && stats.statistics && stats.statistics.viewCount) ? stats.statistics.viewCount : '0',
-                    isLive: false,
-                  };
-                });
+                recentVideos = playlistData.items
+                  .map((item: any) => {
+                    const videoId = item.snippet.resourceId.videoId;
+                    const stats: any = statsMap.get(videoId);
+                    
+                    return {
+                      id: videoId,
+                      videoId: videoId,
+                      title: item.snippet.title || 'Sin título',
+                      description: item.snippet.description || '',
+                      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                      publishedAt: item.snippet.publishedAt,
+                      viewCount: (stats && stats.statistics && stats.statistics.viewCount) ? stats.statistics.viewCount : '0',
+                      isLive: false,
+                    };
+                  })
+                  // Filter out the live stream video from recent videos if it exists
+                  .filter((video: any) => !liveStream || video.videoId !== liveStream.videoId);
               }
             }
           }
