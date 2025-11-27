@@ -79,6 +79,40 @@ The `/vivo` page will automatically:
 - Display recent videos (always shown, even when live stream is active)
 - Fetch fresh data on each page load (when deployed to Netlify)
 
+### Google Calendar Integration Setup
+
+To enable the calendar events on the activities page, you need to configure Google Calendar API credentials:
+
+1. **Get a Google Calendar API Key:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+   - Enable the "Google Calendar API"
+   - Create credentials (API Key)
+   - Copy your API key
+
+2. **Get your Calendar ID:**
+   - Go to [Google Calendar](https://calendar.google.com/)
+   - Find the calendar you want to use
+   - Go to Calendar settings → Integrate calendar
+   - Copy the "Calendar ID" (usually in format `xxxxx@group.calendar.google.com` or your email)
+   - **Important**: The calendar must be public or you need to share it publicly
+
+3. **For Local Development** - Add to your `.env` file:
+   ```env
+   GOOGLE_CALENDAR_API_KEY=your_api_key_here
+   GOOGLE_CALENDAR_ID=your_calendar_id_here
+   ```
+   - **Alternative**: You can also use `PUBLIC_GOOGLE_CALENDAR_API_KEY` and `PUBLIC_GOOGLE_CALENDAR_ID` (the Edge Function will check both)
+   - **Important**: Use `npm run dev:netlify` (not `npm run dev`) to test the `/actividades` page locally, as it requires Edge Functions
+
+4. **For Production on Netlify**: Use `GOOGLE_CALENDAR_API_KEY` and `GOOGLE_CALENDAR_ID` (without `PUBLIC_`) in Netlify's environment variables to keep the API key secure server-side
+
+The `/actividades` page will automatically:
+- Display upcoming events from your Google Calendar
+- Show event details including date, time, location, and description
+- Link to the event in Google Calendar
+- Fall back to static activities if calendar is not configured
+
 ### Build
 
 Build the production site:
@@ -182,7 +216,9 @@ This project is configured for Netlify hosting with Edge Functions for dynamic Y
    - Add the following variables:
      - `YOUTUBE_API_KEY`: Your YouTube Data API v3 key (keep this secret!)
      - `YOUTUBE_CHANNEL_ID`: Your YouTube Channel ID
-   - **Important**: Use `YOUTUBE_API_KEY` (not `PUBLIC_YOUTUBE_API_KEY`) so it stays server-side
+     - `GOOGLE_CALENDAR_API_KEY`: Your Google Calendar API key (keep this secret!)
+     - `GOOGLE_CALENDAR_ID`: Your Google Calendar ID
+   - **Important**: Use keys without `PUBLIC_` prefix so they stay server-side
 
 4. **Deploy**:
    - Netlify will automatically build and deploy when you push to your connected branch

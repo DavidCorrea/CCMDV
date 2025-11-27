@@ -31,7 +31,7 @@ export default async (request: Request, context: { next: () => Promise<Response>
   }
 
   // @ts-ignore - Deno is available in Netlify Edge Functions runtime
-  const apiKey = Deno.env.get('YOUTUBE_API_KEY')
+  const apiKey = Deno.env.get('GOOGLE_API_KEY')
   // @ts-ignore - Deno is available in Netlify Edge Functions runtime
   const channelId = Deno.env.get('YOUTUBE_CHANNEL_ID')
 

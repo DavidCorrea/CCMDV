@@ -19,18 +19,25 @@ const currentPathname = Astro.url.pathname;
         {t.activities.subtitle}
       </p>
 
-      <div class="grid md:grid-cols-2 gap-8 mb-12">
-        {t.activities.items.map((activity) => (
-          <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-            <h2 class="text-2xl font-semibold text-blue-600 mb-3">{activity.title}</h2>
-            <p class="text-gray-700 leading-relaxed mb-4">{activity.description}</p>
-            {activity.time && (
-              <p class="text-sm text-gray-600">
-                <strong>{t.activities.time}:</strong> {activity.time}
-              </p>
-            )}
-          </div>
-        ))}
+      <!-- Calendar Events Section -->
+      <div id="calendar-events-section" class="mb-12">
+        <div id="calendar-events-loading" class="text-center py-12">
+          <p class="text-gray-600">Cargando eventos...</p>
+        </div>
+        <div id="calendar-events-grid" class="grid md:grid-cols-2 gap-6 hidden">
+          <!-- Events will be inserted here by JavaScript -->
+        </div>
+        <div id="calendar-events-empty" class="hidden text-center py-12">
+          <p class="text-gray-600 text-lg">No hay eventos próximos en este momento.</p>
+        </div>
+        <div id="calendar-events-error" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-4">
+          <p class="text-yellow-800">
+            <strong>No se pudieron cargar los eventos del calendario.</strong>
+          </p>
+          <p class="text-yellow-800 text-sm mt-2">
+            Por favor, revisa la configuración de Google Calendar en las variables de entorno.
+          </p>
+        </div>
       </div>
 
       <section class="bg-gray-50 border border-gray-200 rounded-lg p-6 md:p-8">
@@ -47,5 +54,109 @@ const currentPathname = Astro.url.pathname;
       </section>
     </div>
   </div>
+
+  <script>
+    (function() {
+      // Fetch calendar events from Edge Function
+      async function fetchCalendarEvents() {
+        const eventsSection = document.getElementById('calendar-events-section');
+        const eventsGrid = document.getElementById('calendar-events-grid');
+        const loadingState = document.getElementById('calendar-events-loading');
+        const errorState = document.getElementById('calendar-events-error');
+        const emptyState = document.getElementById('calendar-events-empty');
+        
+        if (!eventsSection || !eventsGrid || !loadingState) return;
+
+        try {
+          const response = await fetch('/api/calendar-events?maxResults=20');
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch calendar events: ${response.status}`);
+          }
+
+          const data = await response.json();
+          loadingState.classList.add('hidden');
+
+          if (data.events && data.events.length > 0) {
+            eventsGrid.innerHTML = '';
+            eventsGrid.classList.remove('hidden');
+            if (emptyState) emptyState.classList.add('hidden');
+            if (errorState) errorState.classList.add('hidden');
+            
+            data.events.forEach((event: any) => {
+              const eventCard = document.createElement('div');
+              eventCard.className = 'bg-white p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow';
+              
+              // Build date/time display HTML from pre-formatted data
+              let dateTimeHtml = '';
+              if (event.hasTime && event.displayTime) {
+                // Event with time
+                if (event.isRecurring) {
+                  // Recurring event - show day of week and time
+                  dateTimeHtml = `
+                    <p class="text-sm text-gray-600">
+                      <strong>Día:</strong> ${event.displayDate} a las ${event.displayTime}
+                    </p>
+                  `;
+                } else {
+                  // One-time event - show full date and time
+                  dateTimeHtml = `
+                    <p class="text-sm text-gray-600 mb-2">
+                      <strong>Fecha:</strong> ${event.displayDate}
+                    </p>
+                    <p class="text-sm text-gray-600">
+                      <strong>Hora:</strong> ${event.displayTime}
+                    </p>
+                  `;
+                }
+              } else {
+                // All-day event
+                if (event.isRecurring) {
+                  // Recurring all-day event - show day of week only
+                  dateTimeHtml = `
+                    <p class="text-sm text-gray-600">
+                      <strong>Día:</strong> ${event.displayDate}
+                    </p>
+                  `;
+                } else {
+                  // One-time all-day event - show full date
+                  dateTimeHtml = `
+                    <p class="text-sm text-gray-600">
+                      <strong>Fecha:</strong> ${event.displayDate}
+                    </p>
+                  `;
+                }
+              }
+              
+              eventCard.innerHTML = `
+                <h3 class="text-xl font-semibold text-blue-600 mb-3">${event.title}</h3>
+                ${event.description ? `<p class="text-gray-700 mb-4 line-clamp-3">${event.description}</p>` : ''}
+                ${dateTimeHtml}
+                ${event.location ? `<p class="text-sm text-gray-600 mt-2"><strong>Ubicación:</strong> ${event.location}</p>` : ''}
+              `;
+              
+              eventsGrid.appendChild(eventCard);
+            });
+          } else {
+            // No events
+            eventsGrid.classList.add('hidden');
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (errorState) errorState.classList.add('hidden');
+          }
+        } catch (error) {
+          console.error('Error fetching calendar events:', error);
+          loadingState.classList.add('hidden');
+          eventsGrid.classList.add('hidden');
+          if (emptyState) emptyState.classList.add('hidden');
+          if (errorState) {
+            errorState.classList.remove('hidden');
+          }
+        }
+      }
+
+      // Fetch events on page load
+      fetchCalendarEvents();
+    })();
+  </script>
 </BaseLayout>
 

@@ -6,3 +6,7 @@
   function = "youtube-data"
   path = "/api/youtube-data"
 
+[[edge_functions]]
+  function = "calendar-events"
+  path = "/api/calendar-events"
+
