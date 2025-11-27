@@ -42,9 +42,12 @@ const showLanguageSwitcher = supportedLanguages.length > 1;
               <li><a href={getLocalizedPath('/', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.home}</a></li>
               <li><a href={getLocalizedPath('/nosotros', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.about}</a></li>
               <li><a href={getLocalizedPath('/actividades', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.activities}</a></li>
-              <li><a href={getLocalizedPath('/vivo', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.live}</a></li>
               <li><a href={getLocalizedPath('/contacto', lang, currentPathname)} class="hover:text-blue-600 transition-colors">{t.nav.contact}</a></li>
             </ul>
+            <!-- Separator -->
+            <div class="h-6 w-px bg-gray-300"></div>
+            <!-- Live Stream Link -->
+            <a href={getLocalizedPath('/vivo', lang, currentPathname)} class="hover:text-blue-600 transition-colors font-medium">{t.nav.live}</a>
             <!-- Language Switcher -->
             {showLanguageSwitcher && (
               <div class="flex gap-2">
@@ -88,9 +91,12 @@ const showLanguageSwitcher = supportedLanguages.length > 1;
             <li><a href={getLocalizedPath('/', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.home}</a></li>
             <li><a href={getLocalizedPath('/nosotros', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.about}</a></li>
             <li><a href={getLocalizedPath('/actividades', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.activities}</a></li>
-            <li><a href={getLocalizedPath('/vivo', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.live}</a></li>
             <li><a href={getLocalizedPath('/contacto', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors">{t.nav.contact}</a></li>
           </ul>
+          <!-- Separator -->
+          <div class="h-px bg-gray-300 my-4"></div>
+          <!-- Live Stream Link -->
+          <a href={getLocalizedPath('/vivo', lang, currentPathname)} class="block py-2 hover:text-blue-600 transition-colors font-medium">{t.nav.live}</a>
           <!-- Mobile Language Switcher -->
           {showLanguageSwitcher && (
             <div class="flex gap-2 pt-4">

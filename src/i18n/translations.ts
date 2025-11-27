@@ -107,28 +107,22 @@ export const translations = {
         items: [
           {
             label: 'Dirección',
-            value: 'Tu dirección aquí',
+            value: 'Av. Nestor Kirchner 1836, Berazategui, Buenos Aires, Argentina',
             type: 'text',
           },
           {
             label: 'Teléfono',
-            value: 'Teléfono aquí',
+            value: '+54 9 1169512565',
             type: 'text',
-          },
-          {
-            label: 'Email',
-            value: 'email@ejemplo.com',
-            type: 'link',
-            display: 'email@ejemplo.com',
           },
         ],
       },
       hours: {
         title: 'Horarios de Atención',
         items: [
-          { day: 'Lunes - Viernes', time: '9:00 AM - 5:00 PM' },
-          { day: 'Sábado', time: '9:00 AM - 12:00 PM' },
-          { day: 'Domingo', time: 'Cerrado' },
+          { day: 'Lunes - Viernes', time: 'Consultar' },
+          { day: 'Sábado', time: 'Consultar' },
+          { day: 'Domingo', time: 'Consultar' },
         ],
       },
       message: {
@@ -138,17 +132,17 @@ export const translations = {
       social: [
         {
           name: 'Facebook',
-          url: '#',
+          url: 'https://www.facebook.com/ccmdvoficial/',
           icon: '📘',
         },
         {
           name: 'Instagram',
-          url: '#',
+          url: 'https://www.instagram.com/ccmdvoficial/',
           icon: '📷',
         },
         {
           name: 'YouTube',
-          url: '#',
+          url: 'https://www.youtube.com/@CCMDVOficial',
           icon: '▶️',
         },
       ],
