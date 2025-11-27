@@ -44,17 +44,19 @@ To enable the live stream and videos page, you need to configure YouTube API cre
    - Go to your YouTube channel
    - The Channel ID is in the URL or you can find it in your channel settings
 
-3. **Create a `.env` file** in the project root:
+3. **For Local Development** - Create a `.env` file in the project root:
    ```env
    PUBLIC_YOUTUBE_API_KEY=your_api_key_here
    PUBLIC_YOUTUBE_CHANNEL_ID=your_channel_id_here
    ```
+   - **Note**: For local dev, these can be `PUBLIC_` prefixed. For production on Netlify, use `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` (without `PUBLIC_`) in Netlify's environment variables to keep the API key secure.
 
 4. **Restart the dev server** after adding the `.env` file
 
-The `/live` page will automatically:
+The `/vivo` page will automatically:
 - Show a live stream if one is currently active
-- Display recent videos if no live stream is available
+- Display recent videos (always shown, even when live stream is active)
+- Fetch fresh data on each page load (when deployed to Netlify)
 
 ### Build
 
@@ -138,11 +140,46 @@ The language switcher in the header will automatically show all supported langua
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 
-## 🚀 Deployment to GoDaddy
+## 🚀 Deployment
 
-This project is set up with GitHub Actions to automatically build and deploy to GoDaddy when you push to the `main` branch.
+### Deployment to Netlify (Recommended)
 
-### Setup Instructions
+This project is configured for Netlify hosting with Edge Functions for dynamic YouTube data fetching.
+
+#### Setup Instructions
+
+1. **Create a Netlify Account**:
+   - Go to [Netlify](https://www.netlify.com/) and sign up (free tier available)
+
+2. **Connect Your Repository**:
+   - In Netlify dashboard, click "Add new site" → "Import an existing project"
+   - Connect your GitHub repository
+   - Netlify will automatically detect the build settings from `netlify.toml`
+
+3. **Configure Environment Variables**:
+   - In Netlify dashboard, go to **Site settings** → **Environment variables**
+   - Add the following variables:
+     - `YOUTUBE_API_KEY`: Your YouTube Data API v3 key (keep this secret!)
+     - `YOUTUBE_CHANNEL_ID`: Your YouTube Channel ID
+   - **Important**: Use `YOUTUBE_API_KEY` (not `PUBLIC_YOUTUBE_API_KEY`) so it stays server-side
+
+4. **Deploy**:
+   - Netlify will automatically build and deploy when you push to your connected branch
+   - Or trigger a deploy manually from the Netlify dashboard
+
+#### Benefits of Netlify Deployment
+
+- ✅ **Dynamic Content**: YouTube data is fetched fresh on each request (no rebuilds needed)
+- ✅ **Secure API Keys**: API keys stay server-side in Edge Functions
+- ✅ **Free Tier**: 100GB bandwidth, 300 build minutes per month
+- ✅ **Automatic Deploys**: Deploys automatically on git push
+- ✅ **Edge Functions**: Fast, serverless functions at the edge
+
+### Deployment to GoDaddy (Alternative)
+
+This project can also be deployed to GoDaddy via GitHub Actions.
+
+#### Setup Instructions
 
 1. **Initialize Git Repository** (if not already done):
    ```sh
@@ -174,6 +211,7 @@ This project is set up with GitHub Actions to automatically build and deploy to 
    - Push to the `main` branch, and GitHub Actions will automatically:
      - Build your Astro site
      - Deploy it to GoDaddy via FTP
+   - **Note**: With GoDaddy, you'll need to rebuild to get fresh YouTube data
 
 ### Manual Deployment
 
@@ -181,7 +219,7 @@ If you prefer to deploy manually:
 
 ```sh
 npm run build
-# Then upload the contents of the dist/ folder to your GoDaddy hosting
+# Then upload the contents of the dist/ folder to your hosting provider
 ```
 
 ## 👀 Learn More

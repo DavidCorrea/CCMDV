@@ -26,7 +26,7 @@ const currentPathname = Astro.url.pathname;
           Conoce más sobre nuestra iglesia y nuestra misión.
         </p>
         <a
-          href={getLocalizedPath('/about', lang, currentPathname)}
+          href={getLocalizedPath('/nosotros', lang, currentPathname)}
           class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm md:text-base transition-colors"
         >
           {t.common.learnMore} →
@@ -39,7 +39,7 @@ const currentPathname = Astro.url.pathname;
           Información sobre nuestros servicios y actividades.
         </p>
         <a
-          href={getLocalizedPath('/services', lang, currentPathname)}
+          href={getLocalizedPath('/actividades', lang, currentPathname)}
           class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm md:text-base transition-colors"
         >
           {t.common.learnMore} →
@@ -52,7 +52,7 @@ const currentPathname = Astro.url.pathname;
           Ponte en contacto con nosotros.
         </p>
         <a
-          href={getLocalizedPath('/contact', lang, currentPathname)}
+          href={getLocalizedPath('/contacto', lang, currentPathname)}
           class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm md:text-base transition-colors"
         >
           {t.common.learnMore} →

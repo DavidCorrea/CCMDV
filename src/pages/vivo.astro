@@ -2,25 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getLangFromUrl } from '../i18n/utils';
 import { getTranslations } from '../i18n/translations';
-import { checkLiveStream, getRecentVideos, formatDate, type YouTubeLiveStream, type YouTubeVideo } from '../utils/youtube';
+import { formatDate, type YouTubeLiveStream, type YouTubeVideo } from '../utils/youtube';
 
 const lang = getLangFromUrl(Astro.url);
 const t = getTranslations(lang);
-
-// Get YouTube API credentials from environment variables
-const youtubeApiKey = import.meta.env.PUBLIC_YOUTUBE_API_KEY;
-const youtubeChannelId = import.meta.env.PUBLIC_YOUTUBE_CHANNEL_ID;
-
-let liveStream: YouTubeLiveStream | null = null;
-let recentVideos: YouTubeVideo[] = [];
-
-if (youtubeApiKey && youtubeChannelId) {
-  // Check for live stream first
-  liveStream = await checkLiveStream(youtubeChannelId, youtubeApiKey);
-  
-  // Always get recent videos, regardless of live stream status
-  recentVideos = await getRecentVideos(youtubeChannelId, youtubeApiKey, 12);
-}
 ---
 
 <BaseLayout title={`${t.live.title} - ${t.site.name}`} description={t.live.title}>
@@ -53,125 +38,182 @@ if (youtubeApiKey && youtubeChannelId) {
       </div>
     </section>
 
-    {liveStream ? (
-      <!-- Live Stream Section -->
-      <section id="real-live-stream-section" class="mb-12">
-        <div class="bg-red-600 text-white px-4 py-2 rounded-t-lg inline-block">
-          <span class="flex items-center gap-2">
-            <span class="w-3 h-3 bg-white rounded-full animate-pulse"></span>
-            {t.live.liveNow}
-          </span>
-        </div>
-        <div class="bg-gray-900 rounded-b-lg overflow-hidden">
-          <div class="aspect-video">
-            <iframe
-              src={`https://www.youtube.com/embed/${liveStream.videoId}?autoplay=1&mute=1&playsinline=1`}
-              title={liveStream.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-              class="w-full h-full"
-            ></iframe>
-          </div>
-        </div>
-        <div class="mt-4">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">{liveStream.title}</h2>
-        </div>
-      </section>
-    ) : !youtubeApiKey || !youtubeChannelId ? (
-      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-        <p class="text-yellow-800">
-          <strong>Lo sentimos.</strong> No se pudieron obtener los videos recientes.
-        </p>
+    <!-- Loading State -->
+    <div id="loading-state" class="text-center py-12">
+      <p class="text-gray-600">Cargando videos...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8 hidden">
+      <p class="text-yellow-800">
+        <strong>Lo sentimos.</strong> No se pudieron obtener los videos recientes.
+      </p>
+    </div>
+
+    <!-- Live Stream Section (populated by JavaScript) -->
+    <section id="real-live-stream-section" class="mb-12 hidden">
+      <div class="bg-red-600 text-white px-4 py-2 rounded-t-lg inline-block">
+        <span class="flex items-center gap-2">
+          <span class="w-3 h-3 bg-white rounded-full animate-pulse"></span>
+          {t.live.liveNow}
+        </span>
       </div>
-    ) : (
-      <!-- No Live Stream Message -->
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-center">
-        <p class="text-blue-800 text-lg">{t.live.noLive}</p>
-      </div>
-    )}
-
-    <!-- Recent Videos Section -->
-    {recentVideos.length > 0 && (
-      <section>
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
-          {t.live.recentVideos}
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {recentVideos.map((video) => (
-            <a
-              href={`https://www.youtube.com/watch?v=${video.videoId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="group bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              <div 
-                class="relative w-full bg-cover bg-center bg-gray-200 overflow-hidden"
-                style={`padding-bottom: 56.25%; background-image: url('${video.thumbnail}');`}
-                role="img"
-                aria-label={video.title}
-              >
-                <img
-                  src={video.thumbnail}
-                  alt=""
-                  class="sr-only"
-                  loading="lazy"
-                />
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-25 transition-opacity duration-300"></div>
-                  <svg class="w-16 h-16 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
-              </div>
-              <div class="p-4">
-                <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                  {video.title}
-                </h3>
-                <div class="text-sm text-gray-600">
-                  <span>{formatDate(video.publishedAt)}</span>
-                </div>
-              </div>
-            </a>
-          ))}
+      <div class="bg-gray-900 rounded-b-lg overflow-hidden">
+        <div class="aspect-video">
+          <iframe
+            id="live-stream-iframe"
+            title="Live Stream"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            class="w-full h-full"
+          ></iframe>
         </div>
-      </section>
-    )}
-
-    {recentVideos.length === 0 && !liveStream && youtubeApiKey && youtubeChannelId && (
-      <div class="text-center py-12">
-        <p class="text-gray-600">No se encontraron videos recientes.</p>
       </div>
-    )}
+      <div class="mt-4">
+        <h2 id="live-stream-title" class="text-2xl font-semibold text-gray-900 mb-2"></h2>
+      </div>
+    </section>
 
-    <!-- Debug info (remove in production) -->
-    {recentVideos.length > 0 && (
-      <script define:vars={{ videos: recentVideos }}>
-        if (videos.length > 0) {
-          // Test thumbnail URL
-          const img = new Image();
-          img.src = videos[0].thumbnail;
-        }
-      </script>
-    )}
+    <!-- No Live Stream Message -->
+    <div id="no-live-message" class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-center hidden">
+      <p class="text-blue-800 text-lg">{t.live.noLive}</p>
+    </div>
 
-    <!-- Demo Mode Handler -->
+    <!-- Recent Videos Section (populated by JavaScript) -->
+    <section id="recent-videos-section" class="hidden">
+      <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+        {t.live.recentVideos}
+      </h2>
+      <div id="recent-videos-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Videos will be inserted here by JavaScript -->
+      </div>
+    </section>
+
+    <!-- YouTube Data Fetcher and Demo Mode Handler -->
     <script>
       (function() {
         const urlParams = new URLSearchParams(window.location.search);
         const demoMode = urlParams.get('demo') === 'true' || urlParams.get('demo') === '1';
         const demoSection = document.getElementById('demo-stream-section');
         const realLiveStreamSection = document.getElementById('real-live-stream-section');
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const noLiveMessage = document.getElementById('no-live-message');
+        const recentVideosSection = document.getElementById('recent-videos-section');
+        const recentVideosGrid = document.getElementById('recent-videos-grid');
         
+        // Handle demo mode
         if (demoMode && demoSection) {
-          // Show demo stream, hide real stream
+          // Show demo stream, hide everything else
           demoSection.classList.remove('hidden');
+          loadingState?.classList.add('hidden');
           if (realLiveStreamSection) {
-            realLiveStreamSection.style.display = 'none';
+            realLiveStreamSection.classList.add('hidden');
           }
+          return; // Don't fetch real data in demo mode
         } else if (demoSection) {
-          // Hide demo stream (real stream will show if it exists)
+          // Hide demo stream
           demoSection.classList.add('hidden');
         }
+
+        // Fetch YouTube data from Edge Function
+        async function fetchYouTubeData() {
+          try {
+            const response = await fetch('/api/youtube-data');
+            if (!response.ok) {
+              throw new Error('Failed to fetch YouTube data');
+            }
+            
+            const data = await response.json();
+            loadingState?.classList.add('hidden');
+            
+            // Handle live stream
+            if (data.liveStream) {
+              const iframe = document.getElementById('live-stream-iframe') as HTMLIFrameElement;
+              const title = document.getElementById('live-stream-title');
+              if (iframe && title) {
+                iframe.src = `https://www.youtube.com/embed/${data.liveStream.videoId}?autoplay=1&mute=1&playsinline=1`;
+                iframe.title = data.liveStream.title;
+                title.textContent = data.liveStream.title;
+                realLiveStreamSection?.classList.remove('hidden');
+              }
+            } else {
+              noLiveMessage?.classList.remove('hidden');
+            }
+            
+            // Handle recent videos
+            if (data.recentVideos && data.recentVideos.length > 0 && recentVideosGrid) {
+              recentVideosGrid.innerHTML = '';
+              data.recentVideos.forEach((video: any) => {
+                const videoCard = document.createElement('a');
+                videoCard.href = `https://www.youtube.com/watch?v=${video.videoId}`;
+                videoCard.target = '_blank';
+                videoCard.rel = 'noopener noreferrer';
+                videoCard.className = 'group bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow';
+                
+                const formatDate = (dateString: string) => {
+                  const date = new Date(dateString);
+                  const now = new Date();
+                  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+                  
+                  if (diffInSeconds < 60) return 'hace unos momentos';
+                  if (diffInSeconds < 3600) {
+                    const minutes = Math.floor(diffInSeconds / 60);
+                    return `hace ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
+                  }
+                  if (diffInSeconds < 86400) {
+                    const hours = Math.floor(diffInSeconds / 3600);
+                    return `hace ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+                  }
+                  if (diffInSeconds < 604800) {
+                    const days = Math.floor(diffInSeconds / 86400);
+                    return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
+                  }
+                  return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+                };
+                
+                videoCard.innerHTML = `
+                  <div 
+                    class="relative w-full bg-cover bg-center bg-gray-200 overflow-hidden"
+                    style="padding-bottom: 56.25%; background-image: url('${video.thumbnail}');"
+                    role="img"
+                    aria-label="${video.title}"
+                  >
+                    <img
+                      src="${video.thumbnail}"
+                      alt=""
+                      class="sr-only"
+                      loading="lazy"
+                    />
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-25 transition-opacity duration-300"></div>
+                      <svg class="w-16 h-16 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      ${video.title}
+                    </h3>
+                    <div class="text-sm text-gray-600">
+                      <span>${formatDate(video.publishedAt)}</span>
+                    </div>
+                  </div>
+                `;
+                recentVideosGrid.appendChild(videoCard);
+              });
+              recentVideosSection?.classList.remove('hidden');
+            }
+          } catch (error) {
+            console.error('Error fetching YouTube data:', error);
+            loadingState?.classList.add('hidden');
+            errorState?.classList.remove('hidden');
+          }
+        }
+        
+        // Fetch data on page load
+        fetchYouTubeData();
       })();
     </script>
   </div>

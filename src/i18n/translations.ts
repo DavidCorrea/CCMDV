@@ -62,19 +62,34 @@ export const translations = {
       time: 'Horario',
       items: [
         { 
-          title: 'Estudio Bíblico',
+          title: 'Reunión de Oración y Discipulado',
           description: 'Grupos pequeños donde estudiamos la Biblia en profundidad, compartimos nuestras experiencias y nos apoyamos mutuamente en nuestro caminar con Cristo.',
-          time: 'Miércoles 7:00 PM',
+          time: 'Miércoles 7:30 PM',
         },
         {
-          title: 'Escuela Dominical',
-          description: 'Clases bíblicas para todas las edades. Desde niños hasta adultos, cada uno puede aprender y crecer en su conocimiento de las Escrituras de manera apropiada para su edad.',
-          time: 'Domingos 9:00 AM',
+          title: 'Pre-adolescentes',
+          description: '',
+          time: 'Sábados 4:00 PM',
         },
         {
-          title: 'Grupos de Oración',
-          description: 'Tiempos dedicados a la oración intercesora, donde oramos por nuestras necesidades, nuestra comunidad y el mundo. Un espacio para buscar la presencia de Dios.',
-          time: 'Viernes 7:00 PM',
+          title: 'Adolescentes',
+          description: '',
+          time: 'Sábados 4:30 PM',
+        },
+        {
+          title: 'Jóvenes',
+          description: '',
+          time: 'Sábados 8:00 PM',
+        },
+        {
+          title: 'Iglesia de Niños',
+          description: '',
+          time: 'Domingos 10:30 AM',
+        },
+        {
+          title: 'Reunión General',
+          description: '',
+          time: 'Domingos 10:30 AM',
         },
       ],
       special: {
