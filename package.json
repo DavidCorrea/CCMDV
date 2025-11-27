@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "dev:netlify": "netlify dev",
+    "test:edge": "deno run --allow-net --allow-env --allow-read test-edge-function.ts",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
@@ -14,6 +16,7 @@
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
-    "@astrojs/netlify": "^6.6.3"
+    "@astrojs/netlify": "^6.6.3",
+    "netlify-cli": "^23.12.1"
   }
 }

@@ -11,15 +11,24 @@ export default async (request: Request, context: { next: () => Promise<Response>
     return context.next();
   }
 
-  // Get API credentials from environment variables
   // @ts-ignore - Deno is available in Netlify Edge Functions runtime
-  const apiKey = Deno.env.get('YOUTUBE_API_KEY');
+  const apiKey = Deno.env.get('YOUTUBE_API_KEY')
   // @ts-ignore - Deno is available in Netlify Edge Functions runtime
-  const channelId = Deno.env.get('YOUTUBE_CHANNEL_ID');
+  const channelId = Deno.env.get('YOUTUBE_CHANNEL_ID')
 
   if (!apiKey || !channelId) {
+    console.error('Missing YouTube API credentials:', { 
+      hasApiKey: !!apiKey, 
+      hasChannelId: !!channelId 
+    });
     return new Response(
-      JSON.stringify({ error: 'YouTube API credentials not configured' }),
+      JSON.stringify({ 
+        error: 'YouTube API credentials not configured',
+        debug: {
+          hasApiKey: !!apiKey,
+          hasChannelId: !!channelId,
+        }
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

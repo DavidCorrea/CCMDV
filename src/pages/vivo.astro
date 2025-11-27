@@ -119,12 +119,21 @@ const t = getTranslations(lang);
         // Fetch YouTube data from Edge Function
         async function fetchYouTubeData() {
           try {
+            console.log('Fetching YouTube data from /api/youtube-data...');
             const response = await fetch('/api/youtube-data');
+            console.log('Response status:', response.status);
+            
             if (!response.ok) {
-              throw new Error('Failed to fetch YouTube data');
+              const errorText = await response.text();
+              console.error('Failed to fetch YouTube data:', response.status, errorText);
+              throw new Error(`Failed to fetch YouTube data: ${response.status}`);
             }
             
             const data = await response.json();
+            console.log('YouTube data received:', { 
+              hasLiveStream: !!data.liveStream, 
+              videoCount: data.recentVideos?.length || 0 
+            });
             loadingState?.classList.add('hidden');
             
             // Handle live stream
@@ -209,6 +218,12 @@ const t = getTranslations(lang);
             console.error('Error fetching YouTube data:', error);
             loadingState?.classList.add('hidden');
             errorState?.classList.remove('hidden');
+            
+            // Show helpful error message
+            const errorMsg = errorState?.querySelector('p');
+            if (errorMsg && error instanceof Error) {
+              errorMsg.innerHTML = `<strong>Error:</strong> ${error.message}<br><small>Make sure you're running <code>npm run dev:netlify</code> (not <code>npm run dev</code>) to enable Edge Functions locally.</small>`;
+            }
           }
         }
         

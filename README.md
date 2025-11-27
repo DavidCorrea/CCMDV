@@ -21,13 +21,33 @@ npm install
 
 ### Development
 
-Start the development server with hot-reload:
+You have two options for local development:
 
+**Option 1: Standard Astro Dev (without Edge Functions)**
 ```sh
 npm run dev
 ```
+- Site available at `http://localhost:4321`
+- **Note**: The `/vivo` page won't work in this mode since it requires Edge Functions
 
-The site will be available at `http://localhost:4321`
+**Option 2: Netlify Dev (with Edge Functions) - Recommended**
+```sh
+npm run dev:netlify
+```
+- Runs both Astro and Edge Functions **locally** (no connection to Netlify servers)
+- Uses local Deno runtime to execute Edge Functions
+- Site available at `http://localhost:8888` (default Netlify dev port)
+- The `/vivo` page will work and fetch YouTube data from the local Edge Function
+- Reads environment variables from `.env` file automatically
+- **Note**: This is completely local - no interaction with Netlify servers required
+
+**Option 3: Test Edge Function Directly (Standalone)**
+```sh
+npm run test:edge
+```
+- Tests the Edge Function logic directly using Deno (no Netlify CLI needed)
+- Useful for debugging YouTube API calls in isolation
+- Requires Deno to be installed: `brew install deno` (macOS) or [download](https://deno.land/)
 
 ### YouTube Integration Setup
 
@@ -46,12 +66,13 @@ To enable the live stream and videos page, you need to configure YouTube API cre
 
 3. **For Local Development** - Create a `.env` file in the project root:
    ```env
-   PUBLIC_YOUTUBE_API_KEY=your_api_key_here
-   PUBLIC_YOUTUBE_CHANNEL_ID=your_channel_id_here
+   YOUTUBE_API_KEY=your_api_key_here
+   YOUTUBE_CHANNEL_ID=your_channel_id_here
    ```
-   - **Note**: For local dev, these can be `PUBLIC_` prefixed. For production on Netlify, use `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` (without `PUBLIC_`) in Netlify's environment variables to keep the API key secure.
+   - **Alternative**: You can also use `PUBLIC_YOUTUBE_API_KEY` and `PUBLIC_YOUTUBE_CHANNEL_ID` (the Edge Function will check both)
+   - **Important**: Use `npm run dev:netlify` (not `npm run dev`) to test the `/vivo` page locally, as it requires Edge Functions
 
-4. **Restart the dev server** after adding the `.env` file
+4. **For Production on Netlify**: Use `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` (without `PUBLIC_`) in Netlify's environment variables to keep the API key secure server-side
 
 The `/vivo` page will automatically:
 - Show a live stream if one is currently active
@@ -166,6 +187,28 @@ This project is configured for Netlify hosting with Edge Functions for dynamic Y
 4. **Deploy**:
    - Netlify will automatically build and deploy when you push to your connected branch
    - Or trigger a deploy manually from the Netlify dashboard
+
+5. **Connect Your GoDaddy Domain** (Optional):
+   - In Netlify dashboard, go to **Site settings** → **Domain management**
+   - Click **Add custom domain**
+   - Enter your domain (e.g., `ccmdv.com` or `www.ccmdv.com`)
+   - Netlify will provide DNS instructions
+   - **In GoDaddy**:
+     - Go to your GoDaddy account → **My Products** → **DNS**
+     - For **root domain** (ccmdv.com):
+       - Add an **A Record**: 
+         - Type: `A`
+         - Name: `@` (or leave blank)
+         - Value: Netlify's IP (Netlify will show this, typically `75.2.60.5`)
+         - TTL: `600` (or default)
+     - For **www subdomain** (www.ccmdv.com):
+       - Add a **CNAME Record**:
+         - Type: `CNAME`
+         - Name: `www`
+         - Value: Your Netlify site URL (e.g., `your-site-name.netlify.app`)
+         - TTL: `600` (or default)
+   - **Wait for DNS propagation** (can take a few minutes to 48 hours)
+   - Netlify will automatically provision an SSL certificate (HTTPS)
 
 #### Benefits of Netlify Deployment
 
