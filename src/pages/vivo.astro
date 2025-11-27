@@ -4,6 +4,9 @@ import { getLangFromUrl } from '../i18n/utils';
 import { getTranslations } from '../i18n/translations';
 import { checkLiveStream, getRecentVideos, formatDate, type YouTubeLiveStream, type YouTubeVideo } from '../utils/youtube';
 
+// Make page dynamic to support query parameters
+export const prerender = false;
+
 const lang = getLangFromUrl(Astro.url);
 const t = getTranslations(lang);
 
@@ -11,17 +14,35 @@ const t = getTranslations(lang);
 const youtubeApiKey = import.meta.env.PUBLIC_YOUTUBE_API_KEY;
 const youtubeChannelId = import.meta.env.PUBLIC_YOUTUBE_CHANNEL_ID;
 
+// Demo mode - set to true to see a mock live stream
+// Check query parameter - try multiple methods
+const urlString = String(Astro.url);
+const demoParam = Astro.url.searchParams.get('demo');
+const hasDemoInUrl = urlString.includes('?demo=true') || urlString.includes('&demo=true') || urlString.includes('?demo=1') || urlString.includes('&demo=1');
+const demoMode = hasDemoInUrl || demoParam === 'true' || demoParam === '1';
+
 let liveStream: YouTubeLiveStream | null = null;
 let recentVideos: YouTubeVideo[] = [];
 
-if (youtubeApiKey && youtubeChannelId) {
+if (demoMode) {
+  // Demo live stream - use a real 24/7 live stream for demo
+  liveStream = {
+    videoId: 'jfKfPfyJRdk', // Lofi hip hop radio - always live
+    title: 'Demo: Transmisión en Vivo',
+    description: 'Esta es una demostración de cómo se vería una transmisión en vivo. Cuando haya una transmisión real, aparecerá aquí automáticamente.',
+    thumbnail: `https://img.youtube.com/vi/jfKfPfyJRdk/hqdefault.jpg`,
+    isLive: true,
+  };
+  // Still fetch recent videos in demo mode if API keys are available
+  if (youtubeApiKey && youtubeChannelId) {
+    recentVideos = await getRecentVideos(youtubeChannelId, youtubeApiKey, 12);
+  }
+} else if (youtubeApiKey && youtubeChannelId) {
   // Check for live stream first
   liveStream = await checkLiveStream(youtubeChannelId, youtubeApiKey);
   
-  // If no live stream, get recent videos
-  if (!liveStream) {
-    recentVideos = await getRecentVideos(youtubeChannelId, youtubeApiKey, 12);
-  }
+  // Always get recent videos, regardless of live stream status
+  recentVideos = await getRecentVideos(youtubeChannelId, youtubeApiKey, 12);
 }
 ---
 
@@ -31,18 +52,7 @@ if (youtubeApiKey && youtubeChannelId) {
       {t.live.title}
     </h1>
 
-    {!youtubeApiKey || !youtubeChannelId ? (
-      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-        <p class="text-yellow-800">
-          <strong>Configuración requerida:</strong> Para mostrar transmisiones en vivo y videos, 
-          necesitas configurar las variables de entorno <code class="bg-yellow-100 px-2 py-1 rounded">PUBLIC_YOUTUBE_API_KEY</code> y 
-          <code class="bg-yellow-100 px-2 py-1 rounded">PUBLIC_YOUTUBE_CHANNEL_ID</code> en tu archivo <code class="bg-yellow-100 px-2 py-1 rounded">.env</code>.
-        </p>
-        <p class="text-yellow-800 mt-2 text-sm">
-          Obtén tu API key en: <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" class="underline">Google Cloud Console</a>
-        </p>
-      </div>
-    ) : liveStream ? (
+    {liveStream ? (
       <!-- Live Stream Section -->
       <section class="mb-12">
         <div class="bg-red-600 text-white px-4 py-2 rounded-t-lg inline-block">
@@ -54,7 +64,7 @@ if (youtubeApiKey && youtubeChannelId) {
         <div class="bg-gray-900 rounded-b-lg overflow-hidden">
           <div class="aspect-video">
             <iframe
-              src={`https://www.youtube.com/embed/${liveStream.videoId}?autoplay=1`}
+              src={`https://www.youtube.com/embed/${liveStream.videoId}?autoplay=1&mute=1&playsinline=1`}
               title={liveStream.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
@@ -64,19 +74,14 @@ if (youtubeApiKey && youtubeChannelId) {
         </div>
         <div class="mt-4">
           <h2 class="text-2xl font-semibold text-gray-900 mb-2">{liveStream.title}</h2>
-          <a
-            href={`https://www.youtube.com/watch?v=${liveStream.videoId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-          >
-            {t.live.watchOnYoutube}
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-            </svg>
-          </a>
         </div>
       </section>
+    ) : !youtubeApiKey || !youtubeChannelId ? (
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+        <p class="text-yellow-800">
+          <strong>Lo sentimos.</strong> No se pudieron obtener los videos recientes.
+        </p>
+      </div>
     ) : (
       <!-- No Live Stream Message -->
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-center">
@@ -140,17 +145,9 @@ if (youtubeApiKey && youtubeChannelId) {
     <!-- Debug info (remove in production) -->
     {recentVideos.length > 0 && (
       <script define:vars={{ videos: recentVideos }}>
-        console.log('Videos loaded:', videos.length);
         if (videos.length > 0) {
-          console.log('First video:', {
-            videoId: videos[0].videoId,
-            thumbnail: videos[0].thumbnail,
-            title: videos[0].title
-          });
           // Test thumbnail URL
           const img = new Image();
-          img.onload = () => console.log('Thumbnail loaded successfully:', videos[0].thumbnail);
-          img.onerror = () => console.error('Thumbnail failed to load:', videos[0].thumbnail);
           img.src = videos[0].thumbnail;
         }
       </script>
