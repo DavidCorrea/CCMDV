@@ -13,30 +13,6 @@ const t = getTranslations(lang);
       {t.live.title}
     </h1>
 
-    <!-- Demo Stream Section (hidden by default) -->
-    <section id="demo-stream-section" class="mb-12 hidden">
-      <div class="bg-red-600 text-white px-4 py-2 rounded-t-lg inline-block">
-        <span class="flex items-center gap-2">
-          <span class="w-3 h-3 bg-white rounded-full animate-pulse"></span>
-          {t.live.liveNow}
-        </span>
-      </div>
-      <div class="bg-gray-900 rounded-b-lg overflow-hidden">
-        <div class="aspect-video">
-          <iframe
-            src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=1&playsinline=1"
-            title="Demo: Transmisión en Vivo"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-            class="w-full h-full"
-          ></iframe>
-        </div>
-      </div>
-      <div class="mt-4">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Demo: Transmisión en Vivo</h2>
-      </div>
-    </section>
-
     <!-- Loading State -->
     <div id="loading-state" class="text-center py-12">
       <p class="text-gray-600">Cargando videos...</p>
@@ -93,34 +69,22 @@ const t = getTranslations(lang);
       (function() {
         const urlParams = new URLSearchParams(window.location.search);
         const demoMode = urlParams.get('demo') === 'true';
-        const demoSection = document.getElementById('demo-stream-section');
         const realLiveStreamSection = document.getElementById('real-live-stream-section');
         const loadingState = document.getElementById('loading-state');
         const errorState = document.getElementById('error-state');
         const noLiveMessage = document.getElementById('no-live-message');
         const recentVideosSection = document.getElementById('recent-videos-section');
         const recentVideosGrid = document.getElementById('recent-videos-grid');
-        
-        // Handle demo mode
-        if (demoMode && demoSection) {
-          // Show demo stream, hide real stream
-          demoSection.classList.remove('hidden');
-          if (realLiveStreamSection) {
-            realLiveStreamSection.classList.add('hidden');
-          }
-        } else if (demoSection) {
-          // Hide demo stream
-          demoSection.classList.add('hidden');
-        }
 
         // Fetch YouTube data from Edge Function
-        // Always fetch recent videos, even in demo mode
         async function fetchYouTubeData() {
           // In demo mode, we still want to show recent videos
           // Only skip showing the real live stream
           try {
-            console.log('Fetching YouTube data from /api/youtube-data...');
-            const response = await fetch('/api/youtube-data');
+            // Pass demo mode to Edge Function via query parameter
+            const apiUrl = demoMode ? '/api/youtube-data?demo=true' : '/api/youtube-data';
+            console.log('Fetching YouTube data from', apiUrl);
+            const response = await fetch(apiUrl);
             console.log('Response status:', response.status);
             
             if (!response.ok) {
@@ -135,9 +99,8 @@ const t = getTranslations(lang);
               videoCount: data.recentVideos?.length || 0 
             });
             loadingState?.classList.add('hidden');
-            
-            // Handle live stream (skip in demo mode)
-            if (!demoMode && data.liveStream) {
+
+            if (data.liveStream) {
               const iframe = document.getElementById('live-stream-iframe') as HTMLIFrameElement;
               const title = document.getElementById('live-stream-title');
               if (iframe && title) {
@@ -146,14 +109,10 @@ const t = getTranslations(lang);
                 title.textContent = data.liveStream.title;
                 realLiveStreamSection?.classList.remove('hidden');
               }
-              // Hide "no live stream" message when there is a live stream
               noLiveMessage?.classList.add('hidden');
-            } else if (!demoMode) {
-              // Only show "no live stream" message when not in demo mode
-              noLiveMessage?.classList.remove('hidden');
             } else {
-              // In demo mode, hide the "no live stream" message
-              noLiveMessage?.classList.add('hidden');
+              realLiveStreamSection?.classList.add('hidden');
+              noLiveMessage?.classList.remove('hidden');
             }
             
             // Handle recent videos - always show if available, regardless of live stream status

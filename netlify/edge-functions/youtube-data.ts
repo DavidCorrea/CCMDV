@@ -11,6 +11,25 @@ export default async (request: Request, context: { next: () => Promise<Response>
     return context.next();
   }
 
+  // Check for demo mode query parameter
+  const demoMode = url.searchParams.get('demo') === 'true';
+  
+  // Demo video ID (Lofi hip hop radio - always live)
+  const DEMO_VIDEO_ID = 'jfKfPfyJRdk';
+
+  // If demo mode, return demo video as live stream
+  // But still fetch recent videos if API keys are available
+  let demoLiveStream = null;
+  if (demoMode) {
+    demoLiveStream = {
+      videoId: DEMO_VIDEO_ID,
+      title: 'Demo: Transmisión en Vivo',
+      description: 'Esta es una demostración de cómo se vería una transmisión en vivo. Cuando haya una transmisión real, aparecerá aquí automáticamente.',
+      thumbnail: `https://img.youtube.com/vi/${DEMO_VIDEO_ID}/hqdefault.jpg`,
+      isLive: true,
+    };
+  }
+
   // @ts-ignore - Deno is available in Netlify Edge Functions runtime
   const apiKey = Deno.env.get('YOUTUBE_API_KEY')
   // @ts-ignore - Deno is available in Netlify Edge Functions runtime
@@ -37,22 +56,26 @@ export default async (request: Request, context: { next: () => Promise<Response>
   }
 
   try {
-    // Check for live stream
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
-    const searchResponse = await fetch(searchUrl);
+    // Use demo live stream if in demo mode, otherwise check for real live stream
+    let liveStream = demoLiveStream;
     
-    let liveStream = null;
-    if (searchResponse.ok) {
-      const searchData = await searchResponse.json();
-      if (searchData.items && searchData.items.length > 0) {
-        const liveVideo = searchData.items[0];
-        liveStream = {
-          videoId: liveVideo.id.videoId,
-          title: liveVideo.snippet.title,
-          description: liveVideo.snippet.description,
-          thumbnail: `https://img.youtube.com/vi/${liveVideo.id.videoId}/hqdefault.jpg`,
-          isLive: true,
-        };
+    if (!demoMode) {
+      // Check for live stream
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
+      const searchResponse = await fetch(searchUrl);
+      
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json();
+        if (searchData.items && searchData.items.length > 0) {
+          const liveVideo = searchData.items[0];
+          liveStream = {
+            videoId: liveVideo.id.videoId,
+            title: liveVideo.snippet.title,
+            description: liveVideo.snippet.description,
+            thumbnail: `https://img.youtube.com/vi/${liveVideo.id.videoId}/hqdefault.jpg`,
+            isLive: true,
+          };
+        }
       }
     }
 
@@ -98,8 +121,11 @@ export default async (request: Request, context: { next: () => Promise<Response>
                       isLive: false,
                     };
                   })
-                  // Filter out the live stream video from recent videos if it exists
-                  .filter((video: any) => !liveStream || video.videoId !== liveStream.videoId);
+                  // Filter out the live stream video from recent videos if it exists (but not in demo mode)
+                  .filter((video: any) => {
+                    if (demoMode) return true; // In demo mode, show all videos
+                    return !liveStream || video.videoId !== liveStream.videoId;
+                  });
               }
             }
           }
