@@ -4,7 +4,7 @@ export const translations = {
   es: {
     site: {
       name: 'Manantial de Vida',
-      description: 'Iglesia Manantial de Vida',
+      description: 'Un lugar de transformación para tu vida',
     },
     nav: {
       home: 'Inicio',
@@ -92,8 +92,8 @@ export const translations = {
           time: 'Domingos 10:30 AM',
         },
       ],
-      special: {
-        title: 'Eventos Especiales',
+      upcoming: {
+        title: 'Próximos Eventos',
         content: 'Además de nuestros servicios regulares, organizamos eventos especiales, conferencias y actividades comunitarias durante el año. ¡Mantente al tanto de nuestras próximas actividades!',
         button: 'Más Información',
       },

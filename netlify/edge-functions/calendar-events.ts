@@ -73,8 +73,6 @@ export default async (request: Request, context: { next: () => Promise<Response>
 
     const response = await fetch(calendarUrl.toString());
 
-    
-
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Google Calendar API error:', response.status, errorText);
@@ -92,7 +90,6 @@ export default async (request: Request, context: { next: () => Promise<Response>
 
     const data = await response.json();
 
-    console.log('data', data);
     // Transform the events to a simpler format
     // With singleEvents=true, recurring events are expanded into individual instances
     const allEvents: CalendarEvent[] = (data.items || [])
@@ -142,11 +139,27 @@ export default async (request: Request, context: { next: () => Promise<Response>
       }
     });
     
-    // Convert map back to array (already sorted by API with orderBy=startTime)
+    // Convert map back to array
     const events = Array.from(eventMap.values());
 
-    // Format events for display
-    const formattedEvents = events.map((event) => {
+    // Separate recurring and one-time events
+    const recurringEvents = events.filter((event) => event.isRecurring || event.recurringEventId);
+    const oneTimeEvents = events.filter((event) => !event.isRecurring && !event.recurringEventId);
+
+    // Sort recurring events by day of week (Sunday = 0, Monday = 1, etc.)
+    recurringEvents.sort((a, b) => {
+      const dayA = new Date(a.start).getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const dayB = new Date(b.start).getDay();
+      return dayA - dayB;
+    });
+
+    // Sort one-time events by start date/time
+    oneTimeEvents.sort((a, b) => {
+      return new Date(a.start).getTime() - new Date(b.start).getTime();
+    });
+
+    // Format events for display - helper function
+    const formatEvent = (event: CalendarEvent) => {
       const startDate = new Date(event.start);
       const hasTime = event.start.includes('T');
       const isRecurring = event.isRecurring || false;
@@ -211,10 +224,17 @@ export default async (request: Request, context: { next: () => Promise<Response>
         displayTime, // Will be undefined for events with time - client formats it
         hasTime,
       };
-    });
+    };
+
+    // Format recurring and one-time events separately
+    const formattedRecurringEvents = recurringEvents.map(formatEvent);
+    const formattedUpcomingEvents = oneTimeEvents.map(formatEvent);
 
     return new Response(
-      JSON.stringify({ events: formattedEvents }),
+      JSON.stringify({ 
+        recurringEvents: formattedRecurringEvents,
+        upcomingEvents: formattedUpcomingEvents
+      }),
       {
         status: 200,
         headers: {

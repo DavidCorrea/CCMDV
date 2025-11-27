@@ -69,8 +69,8 @@ const currentPathname = Astro.url.pathname;
 
   <script>
     (function() {
-      // Helper function to format time in client's timezone
-      function formatTimeInClientTimezone(isoString: string): string {
+      // Helper functions for formatting dates/times in client timezone
+      function formatTimeInClientTimezone(isoString) {
         const date = new Date(isoString);
         return date.toLocaleTimeString('es-ES', {
           hour: '2-digit',
@@ -79,8 +79,7 @@ const currentPathname = Astro.url.pathname;
         });
       }
 
-      // Helper function to format day of week in client's timezone (capitalized)
-      function formatDayOfWeekInClientTimezone(isoString: string): string {
+      function formatDayOfWeekInClientTimezone(isoString) {
         const date = new Date(isoString);
         const dayName = date.toLocaleDateString('es-ES', {
           weekday: 'long',
@@ -92,8 +91,7 @@ const currentPathname = Astro.url.pathname;
         return dayName;
       }
 
-      // Helper function to format full date in client's timezone (capitalized day, no year)
-      function formatDateInClientTimezone(isoString: string): string {
+      function formatDateInClientTimezone(isoString) {
         const date = new Date(isoString);
         const formatted = date.toLocaleDateString('es-ES', {
           weekday: 'long',
@@ -101,26 +99,21 @@ const currentPathname = Astro.url.pathname;
           day: 'numeric',
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         });
-        // Capitalize first letter of the entire string (which starts with the day name)
         if (formatted && formatted.length > 0) {
           return formatted.charAt(0).toUpperCase() + formatted.slice(1);
         }
         return formatted;
       }
 
-      // Helper function to create an event card
-      function createEventCard(event: any): HTMLElement {
+      function createEventCard(event) {
         const eventCard = document.createElement('div');
         eventCard.className = 'bg-white p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow';
         
-        // Build date/time display HTML - format time on client side for timezone accuracy
         let dateTimeHtml = '';
         if (event.hasTime) {
-          // Event with time - format time on client side
           const clientTime = formatTimeInClientTimezone(event.start);
           
           if (event.isRecurring) {
-            // Recurring event - format day and time in client timezone
             const clientDay = formatDayOfWeekInClientTimezone(event.start);
             dateTimeHtml = `
               <p class="text-lg font-semibold text-gray-900 mb-3">
@@ -128,7 +121,6 @@ const currentPathname = Astro.url.pathname;
               </p>
             `;
           } else {
-            // One-time event - format date in client timezone (capitalized, no year)
             const clientDate = formatDateInClientTimezone(event.start);
             dateTimeHtml = `
               <p class="text-lg font-semibold text-gray-900 mb-3">
@@ -137,9 +129,7 @@ const currentPathname = Astro.url.pathname;
             `;
           }
         } else {
-          // All-day event
           if (event.isRecurring) {
-            // Recurring all-day event - format day in client timezone
             const clientDay = formatDayOfWeekInClientTimezone(event.start);
             dateTimeHtml = `
               <p class="text-lg font-semibold text-gray-900 mb-3">
@@ -147,7 +137,6 @@ const currentPathname = Astro.url.pathname;
               </p>
             `;
           } else {
-            // One-time all-day event - format date in client timezone (capitalized, no year)
             const clientDate = formatDateInClientTimezone(event.start);
             dateTimeHtml = `
               <p class="text-lg font-semibold text-gray-900 mb-3">
@@ -196,10 +185,11 @@ const currentPathname = Astro.url.pathname;
           const data = await response.json();
           loadingState.classList.add('hidden');
 
-          if (data.events && data.events.length > 0) {
-            // Separate recurring and one-time events
-            const recurringEvents = data.events.filter((event: any) => event.isRecurring);
-            const specialEvents = data.events.filter((event: any) => !event.isRecurring);
+          // Get events from separate arrays
+          const recurringEvents = data.recurringEvents || [];
+          const upcomingEvents = data.upcomingEvents || [];
+
+          if (recurringEvents.length > 0 || upcomingEvents.length > 0) {
             
             // Hide empty state
             if (emptyState) emptyState.classList.add('hidden');
@@ -208,7 +198,7 @@ const currentPathname = Astro.url.pathname;
             // Handle recurring events
             if (recurringEvents.length > 0 && recurringSection && recurringGrid) {
               recurringGrid.innerHTML = '';
-              recurringEvents.forEach((event: any) => {
+              recurringEvents.forEach((event) => {
                 recurringGrid.appendChild(createEventCard(event));
               });
               recurringSection.classList.remove('hidden');
@@ -216,11 +206,11 @@ const currentPathname = Astro.url.pathname;
             } else {
               if (recurringSection) recurringSection.classList.add('hidden');
             }
-            
+
             // Handle upcoming events
-            if (specialEvents.length > 0 && upcomingSection && upcomingGrid) {
+            if (upcomingEvents.length > 0 && upcomingSection && upcomingGrid) {
               upcomingGrid.innerHTML = '';
-              specialEvents.forEach((event: any) => {
+              upcomingEvents.forEach((event) => {
                 upcomingGrid.appendChild(createEventCard(event));
               });
               upcomingSection.classList.remove('hidden');
