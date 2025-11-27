@@ -14,18 +14,18 @@ export default async (request: Request, context: { next: () => Promise<Response>
   // Check for demo mode query parameter
   const demoMode = url.searchParams.get('demo') === 'true';
   
-  // Demo video ID (Lofi hip hop radio - always live)
-  const DEMO_VIDEO_ID = 'jfKfPfyJRdk';
+  // @ts-ignore - Deno is available in Netlify Edge Functions runtime
+  const demoVideoId = Deno.env.get('YOUTUBE_DEMO_VIDEO_ID');
 
   // If demo mode, return demo video as live stream
   // But still fetch recent videos if API keys are available
   let demoLiveStream = null;
   if (demoMode) {
     demoLiveStream = {
-      videoId: DEMO_VIDEO_ID,
+      videoId: demoVideoId,
       title: 'Demo: Transmisión en Vivo',
       description: 'Esta es una demostración de cómo se vería una transmisión en vivo. Cuando haya una transmisión real, aparecerá aquí automáticamente.',
-      thumbnail: `https://img.youtube.com/vi/${DEMO_VIDEO_ID}/hqdefault.jpg`,
+      thumbnail: `https://img.youtube.com/vi/${demoVideoId}/hqdefault.jpg`,
       isLive: true,
     };
   }
