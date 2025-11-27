@@ -4,9 +4,6 @@ import { getLangFromUrl } from '../i18n/utils';
 import { getTranslations } from '../i18n/translations';
 import { checkLiveStream, getRecentVideos, formatDate, type YouTubeLiveStream, type YouTubeVideo } from '../utils/youtube';
 
-// Make page dynamic to support query parameters
-export const prerender = false;
-
 const lang = getLangFromUrl(Astro.url);
 const t = getTranslations(lang);
 
@@ -14,30 +11,10 @@ const t = getTranslations(lang);
 const youtubeApiKey = import.meta.env.PUBLIC_YOUTUBE_API_KEY;
 const youtubeChannelId = import.meta.env.PUBLIC_YOUTUBE_CHANNEL_ID;
 
-// Demo mode - set to true to see a mock live stream
-// Check query parameter - try multiple methods
-const urlString = String(Astro.url);
-const demoParam = Astro.url.searchParams.get('demo');
-const hasDemoInUrl = urlString.includes('?demo=true') || urlString.includes('&demo=true') || urlString.includes('?demo=1') || urlString.includes('&demo=1');
-const demoMode = hasDemoInUrl || demoParam === 'true' || demoParam === '1';
-
 let liveStream: YouTubeLiveStream | null = null;
 let recentVideos: YouTubeVideo[] = [];
 
-if (demoMode) {
-  // Demo live stream - use a real 24/7 live stream for demo
-  liveStream = {
-    videoId: 'jfKfPfyJRdk', // Lofi hip hop radio - always live
-    title: 'Demo: Transmisión en Vivo',
-    description: 'Esta es una demostración de cómo se vería una transmisión en vivo. Cuando haya una transmisión real, aparecerá aquí automáticamente.',
-    thumbnail: `https://img.youtube.com/vi/jfKfPfyJRdk/hqdefault.jpg`,
-    isLive: true,
-  };
-  // Still fetch recent videos in demo mode if API keys are available
-  if (youtubeApiKey && youtubeChannelId) {
-    recentVideos = await getRecentVideos(youtubeChannelId, youtubeApiKey, 12);
-  }
-} else if (youtubeApiKey && youtubeChannelId) {
+if (youtubeApiKey && youtubeChannelId) {
   // Check for live stream first
   liveStream = await checkLiveStream(youtubeChannelId, youtubeApiKey);
   
@@ -52,9 +29,33 @@ if (demoMode) {
       {t.live.title}
     </h1>
 
+    <!-- Demo Stream Section (hidden by default, shown via JavaScript) -->
+    <section id="demo-stream-section" class="mb-12 hidden">
+      <div class="bg-red-600 text-white px-4 py-2 rounded-t-lg inline-block">
+        <span class="flex items-center gap-2">
+          <span class="w-3 h-3 bg-white rounded-full animate-pulse"></span>
+          {t.live.liveNow}
+        </span>
+      </div>
+      <div class="bg-gray-900 rounded-b-lg overflow-hidden">
+        <div class="aspect-video">
+          <iframe
+            src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=1&playsinline=1"
+            title="Demo: Transmisión en Vivo"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            class="w-full h-full"
+          ></iframe>
+        </div>
+      </div>
+      <div class="mt-4">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Demo: Transmisión en Vivo</h2>
+      </div>
+    </section>
+
     {liveStream ? (
       <!-- Live Stream Section -->
-      <section class="mb-12">
+      <section id="real-live-stream-section" class="mb-12">
         <div class="bg-red-600 text-white px-4 py-2 rounded-t-lg inline-block">
           <span class="flex items-center gap-2">
             <span class="w-3 h-3 bg-white rounded-full animate-pulse"></span>
@@ -152,6 +153,27 @@ if (demoMode) {
         }
       </script>
     )}
+
+    <!-- Demo Mode Handler -->
+    <script>
+      (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const demoMode = urlParams.get('demo') === 'true' || urlParams.get('demo') === '1';
+        const demoSection = document.getElementById('demo-stream-section');
+        const realLiveStreamSection = document.getElementById('real-live-stream-section');
+        
+        if (demoMode && demoSection) {
+          // Show demo stream, hide real stream
+          demoSection.classList.remove('hidden');
+          if (realLiveStreamSection) {
+            realLiveStreamSection.style.display = 'none';
+          }
+        } else if (demoSection) {
+          // Hide demo stream (real stream will show if it exists)
+          demoSection.classList.add('hidden');
+        }
+      })();
+    </script>
   </div>
 </BaseLayout>
 
