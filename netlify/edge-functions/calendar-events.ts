@@ -59,17 +59,21 @@ export default async (request: Request, context: { next: () => Promise<Response>
     const timeMax = url.searchParams.get('timeMax') || undefined;
 
     // Build the API URL
+    // Use singleEvents=true to expand recurring events into individual instances
+    // Then we'll deduplicate to show only the next occurrence of each recurring event
     const calendarUrl = new URL('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calendarId) + '/events');
     calendarUrl.searchParams.set('key', apiKey);
     calendarUrl.searchParams.set('maxResults', maxResults.toString());
     calendarUrl.searchParams.set('timeMin', timeMin);
-    calendarUrl.searchParams.set('orderBy', 'startTime');
-    calendarUrl.searchParams.set('singleEvents', 'true');
+    calendarUrl.searchParams.set('singleEvents', 'true'); // Expand recurring events into instances
+    calendarUrl.searchParams.set('orderBy', 'startTime'); // Order by start time
     if (timeMax) {
       calendarUrl.searchParams.set('timeMax', timeMax);
     }
 
     const response = await fetch(calendarUrl.toString());
+
+    
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -88,51 +92,58 @@ export default async (request: Request, context: { next: () => Promise<Response>
 
     const data = await response.json();
 
+    console.log('data', data);
     // Transform the events to a simpler format
-    const allEvents: CalendarEvent[] = (data.items || []).map((item: any) => ({
-      id: item.id,
-      title: item.summary || 'Sin título',
-      description: item.description || '',
-      start: item.start?.dateTime || item.start?.date || '',
-      end: item.end?.dateTime || item.end?.date || '',
-      location: item.location || undefined,
-      htmlLink: item.htmlLink || undefined,
-      recurringEventId: item.recurringEventId || undefined,
-      isRecurring: !!item.recurringEventId,
-    }));
+    // With singleEvents=true, recurring events are expanded into individual instances
+    const allEvents: CalendarEvent[] = (data.items || [])
+      .map((item: any) => {
+        const isRecurring = !!item.recurringEventId;
+        
+        return {
+          id: item.id,
+          title: item.summary || 'Sin título',
+          description: item.description || '',
+          start: item.start?.dateTime || item.start?.date || '',
+          end: item.end?.dateTime || item.end?.date || '',
+          location: item.location || undefined,
+          htmlLink: item.htmlLink || undefined,
+          recurringEventId: item.recurringEventId || undefined,
+          isRecurring: isRecurring,
+        };
+      })
+      .filter((event: CalendarEvent) => {
+        // Filter out past events (both recurring and one-time)
+        const startDate = new Date(event.start);
+        const now = new Date();
+        return startDate >= now;
+      });
 
-    // Deduplicate recurring weekly events
-    // Group events by title + day of week + time (for recurring events)
+    // Deduplicate recurring events
+    // Group by recurringEventId - all instances of the same recurring event share the same recurringEventId
+    // Keep only the next (earliest) occurrence of each recurring event
     const eventMap = new Map<string, CalendarEvent>();
     
-    allEvents.forEach((event) => {
-      const startDate = new Date(event.start);
-      const dayOfWeek = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      const hasTime = event.start.includes('T');
-      const time = hasTime ? startDate.toTimeString().slice(0, 5) : 'all-day'; // HH:MM format
-      
-      // Create a unique key for recurring events: title + dayOfWeek + time
-      const recurringKey = `${event.title}|${dayOfWeek}|${time}`;
-      
-      // If this is a recurring event (has recurringEventId) or matches a pattern
-      if (event.recurringEventId || eventMap.has(recurringKey)) {
-        // Mark as recurring and only keep the first occurrence (earliest date) of each recurring event
-        event.isRecurring = true;
-        const existing = eventMap.get(recurringKey);
-        if (!existing || new Date(event.start) < new Date(existing.start)) {
-          eventMap.set(recurringKey, event);
+    allEvents.forEach((event: CalendarEvent) => {
+      if (event.isRecurring && event.recurringEventId) {
+        // Recurring event - use recurringEventId as key to group instances
+        const existing = eventMap.get(event.recurringEventId);
+        if (!existing) {
+          // First instance of this recurring event
+          eventMap.set(event.recurringEventId, event);
+        } else {
+          // Keep the one with the earliest start date (next occurrence)
+          if (new Date(event.start) < new Date(existing.start)) {
+            eventMap.set(event.recurringEventId, event);
+          }
         }
       } else {
-        // Non-recurring event, use event ID as key
-        event.isRecurring = false;
+        // One-time event - use event ID as key
         eventMap.set(event.id, event);
       }
     });
     
-    // Convert map back to array and sort by start time
-    const events = Array.from(eventMap.values()).sort((a, b) => 
-      new Date(a.start).getTime() - new Date(b.start).getTime()
-    );
+    // Convert map back to array (already sorted by API with orderBy=startTime)
+    const events = Array.from(eventMap.values());
 
     // Format events for display
     const formattedEvents = events.map((event) => {
@@ -140,20 +151,24 @@ export default async (request: Request, context: { next: () => Promise<Response>
       const hasTime = event.start.includes('T');
       const isRecurring = event.isRecurring || false;
 
-      // Format date in Spanish
+      // Format date in Spanish (without year for one-time events)
       const formatDate = (date: Date) => {
         return date.toLocaleDateString('es-ES', { 
           weekday: 'long',
-          year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         });
       };
 
       const formatDayOfWeek = (date: Date) => {
-        return date.toLocaleDateString('es-ES', { 
+        const dayName = date.toLocaleDateString('es-ES', { 
           weekday: 'long'
         });
+        // Capitalize first letter - ensure it works even if locale returns lowercase
+        if (dayName && dayName.length > 0) {
+          return dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
+        }
+        return dayName;
       };
 
       const formatTime = (date: Date) => {
@@ -164,17 +179,20 @@ export default async (request: Request, context: { next: () => Promise<Response>
       };
 
       let displayDate = '';
+      // Don't format time on server - let client format it in their timezone
+      // For recurring events with time, we'll format both day and time on client
+      // For one-time events, we format the date on server but time on client
       let displayTime: string | undefined = undefined;
 
       if (hasTime) {
         if (isRecurring) {
-          // Recurring event - show day of week only
+          // Recurring event - format day on server, time will be formatted on client
           displayDate = formatDayOfWeek(startDate);
-          displayTime = formatTime(startDate);
+          // Don't set displayTime - client will format from raw start date
         } else {
-          // One-time event - show full date
+          // One-time event - show full date on server, time on client
           displayDate = formatDate(startDate);
-          displayTime = formatTime(startDate);
+          // Don't set displayTime - client will format from raw start date
         }
       } else {
         // All-day event
@@ -190,7 +208,7 @@ export default async (request: Request, context: { next: () => Promise<Response>
       return {
         ...event,
         displayDate,
-        displayTime,
+        displayTime, // Will be undefined for events with time - client formats it
         hasTime,
       };
     });

@@ -24,9 +24,33 @@ const currentPathname = Astro.url.pathname;
         <div id="calendar-events-loading" class="text-center py-12">
           <p class="text-gray-600">Cargando eventos...</p>
         </div>
-        <div id="calendar-events-grid" class="grid md:grid-cols-2 gap-6 hidden">
-          <!-- Events will be inserted here by JavaScript -->
+
+        <!-- Recurring Activities Section -->
+        <div id="recurring-activities-section" class="mb-12 hidden">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+            {t.activities.subtitle}
+          </h2>
+          <div id="recurring-events-grid" class="grid md:grid-cols-2 gap-6">
+            <!-- Recurring events will be inserted here by JavaScript -->
+          </div>
+          <div id="recurring-events-empty" class="hidden text-center py-8">
+            <p class="text-gray-600">No hay actividades regulares programadas.</p>
+          </div>
         </div>
+
+        <!-- Upcoming Events Section -->
+        <div id="upcoming-events-section" class="mb-12 hidden">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+            Próximos Eventos
+          </h2>
+          <div id="upcoming-events-grid" class="grid md:grid-cols-2 gap-6">
+            <!-- One-time events will be inserted here by JavaScript -->
+          </div>
+          <div id="upcoming-events-empty" class="hidden text-center py-8">
+            <p class="text-gray-600">No hay eventos próximos en este momento.</p>
+          </div>
+        </div>
+
         <div id="calendar-events-empty" class="hidden text-center py-12">
           <p class="text-gray-600 text-lg">No hay eventos próximos en este momento.</p>
         </div>
@@ -40,35 +64,130 @@ const currentPathname = Astro.url.pathname;
         </div>
       </div>
 
-      <section class="bg-gray-50 border border-gray-200 rounded-lg p-6 md:p-8">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-4">{t.activities.special.title}</h2>
-        <p class="text-gray-700 mb-4">
-          {t.activities.special.content}
-        </p>
-        <a
-          href={getLocalizedPath('/contacto', lang, currentPathname)}
-          class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          {t.activities.special.button}
-        </a>
-      </section>
     </div>
   </div>
 
   <script>
     (function() {
+      // Helper function to format time in client's timezone
+      function formatTimeInClientTimezone(isoString: string): string {
+        const date = new Date(isoString);
+        return date.toLocaleTimeString('es-ES', {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+      }
+
+      // Helper function to format day of week in client's timezone (capitalized)
+      function formatDayOfWeekInClientTimezone(isoString: string): string {
+        const date = new Date(isoString);
+        const dayName = date.toLocaleDateString('es-ES', {
+          weekday: 'long',
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+        if (dayName && dayName.length > 0) {
+          return dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
+        }
+        return dayName;
+      }
+
+      // Helper function to format full date in client's timezone (capitalized day, no year)
+      function formatDateInClientTimezone(isoString: string): string {
+        const date = new Date(isoString);
+        const formatted = date.toLocaleDateString('es-ES', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+        // Capitalize first letter of the entire string (which starts with the day name)
+        if (formatted && formatted.length > 0) {
+          return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+        }
+        return formatted;
+      }
+
+      // Helper function to create an event card
+      function createEventCard(event: any): HTMLElement {
+        const eventCard = document.createElement('div');
+        eventCard.className = 'bg-white p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow';
+        
+        // Build date/time display HTML - format time on client side for timezone accuracy
+        let dateTimeHtml = '';
+        if (event.hasTime) {
+          // Event with time - format time on client side
+          const clientTime = formatTimeInClientTimezone(event.start);
+          
+          if (event.isRecurring) {
+            // Recurring event - format day and time in client timezone
+            const clientDay = formatDayOfWeekInClientTimezone(event.start);
+            dateTimeHtml = `
+              <p class="text-lg font-semibold text-gray-900 mb-3">
+                ${clientDay} a las ${clientTime}
+              </p>
+            `;
+          } else {
+            // One-time event - format date in client timezone (capitalized, no year)
+            const clientDate = formatDateInClientTimezone(event.start);
+            dateTimeHtml = `
+              <p class="text-lg font-semibold text-gray-900 mb-3">
+                ${clientDate} a las ${clientTime}
+              </p>
+            `;
+          }
+        } else {
+          // All-day event
+          if (event.isRecurring) {
+            // Recurring all-day event - format day in client timezone
+            const clientDay = formatDayOfWeekInClientTimezone(event.start);
+            dateTimeHtml = `
+              <p class="text-lg font-semibold text-gray-900 mb-3">
+                ${clientDay}
+              </p>
+            `;
+          } else {
+            // One-time all-day event - format date in client timezone (capitalized, no year)
+            const clientDate = formatDateInClientTimezone(event.start);
+            dateTimeHtml = `
+              <p class="text-lg font-semibold text-gray-900 mb-3">
+                ${clientDate}
+              </p>
+            `;
+          }
+        }
+        
+        eventCard.innerHTML = `
+          <h3 class="text-xl font-semibold text-blue-600 mb-3">${event.title}</h3>
+          ${dateTimeHtml}
+          ${event.description ? `<p class="text-gray-700 mb-4 line-clamp-3">${event.description}</p>` : ''}
+          ${event.location ? `<p class="text-sm text-gray-600 mt-2"><strong>Ubicación:</strong> ${event.location}</p>` : ''}
+        `;
+        
+        return eventCard;
+      }
+
       // Fetch calendar events from Edge Function
       async function fetchCalendarEvents() {
         const eventsSection = document.getElementById('calendar-events-section');
-        const eventsGrid = document.getElementById('calendar-events-grid');
         const loadingState = document.getElementById('calendar-events-loading');
         const errorState = document.getElementById('calendar-events-error');
         const emptyState = document.getElementById('calendar-events-empty');
         
-        if (!eventsSection || !eventsGrid || !loadingState) return;
+        // Recurring activities section
+        const recurringSection = document.getElementById('recurring-activities-section');
+        const recurringGrid = document.getElementById('recurring-events-grid');
+        const recurringEmpty = document.getElementById('recurring-events-empty');
+        
+        // Upcoming events section
+        const upcomingSection = document.getElementById('upcoming-events-section');
+        const upcomingGrid = document.getElementById('upcoming-events-grid');
+        const upcomingEmpty = document.getElementById('upcoming-events-empty');
+        
+        if (!eventsSection || !loadingState) return;
 
         try {
-          const response = await fetch('/api/calendar-events?maxResults=20');
+          const response = await fetch('/api/calendar-events?maxResults=50');
           
           if (!response.ok) {
             throw new Error(`Failed to fetch calendar events: ${response.status}`);
@@ -78,75 +197,49 @@ const currentPathname = Astro.url.pathname;
           loadingState.classList.add('hidden');
 
           if (data.events && data.events.length > 0) {
-            eventsGrid.innerHTML = '';
-            eventsGrid.classList.remove('hidden');
+            // Separate recurring and one-time events
+            const recurringEvents = data.events.filter((event: any) => event.isRecurring);
+            const specialEvents = data.events.filter((event: any) => !event.isRecurring);
+            
+            // Hide empty state
             if (emptyState) emptyState.classList.add('hidden');
             if (errorState) errorState.classList.add('hidden');
             
-            data.events.forEach((event: any) => {
-              const eventCard = document.createElement('div');
-              eventCard.className = 'bg-white p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow';
-              
-              // Build date/time display HTML from pre-formatted data
-              let dateTimeHtml = '';
-              if (event.hasTime && event.displayTime) {
-                // Event with time
-                if (event.isRecurring) {
-                  // Recurring event - show day of week and time
-                  dateTimeHtml = `
-                    <p class="text-sm text-gray-600">
-                      <strong>Día:</strong> ${event.displayDate} a las ${event.displayTime}
-                    </p>
-                  `;
-                } else {
-                  // One-time event - show full date and time
-                  dateTimeHtml = `
-                    <p class="text-sm text-gray-600 mb-2">
-                      <strong>Fecha:</strong> ${event.displayDate}
-                    </p>
-                    <p class="text-sm text-gray-600">
-                      <strong>Hora:</strong> ${event.displayTime}
-                    </p>
-                  `;
-                }
-              } else {
-                // All-day event
-                if (event.isRecurring) {
-                  // Recurring all-day event - show day of week only
-                  dateTimeHtml = `
-                    <p class="text-sm text-gray-600">
-                      <strong>Día:</strong> ${event.displayDate}
-                    </p>
-                  `;
-                } else {
-                  // One-time all-day event - show full date
-                  dateTimeHtml = `
-                    <p class="text-sm text-gray-600">
-                      <strong>Fecha:</strong> ${event.displayDate}
-                    </p>
-                  `;
-                }
-              }
-              
-              eventCard.innerHTML = `
-                <h3 class="text-xl font-semibold text-blue-600 mb-3">${event.title}</h3>
-                ${event.description ? `<p class="text-gray-700 mb-4 line-clamp-3">${event.description}</p>` : ''}
-                ${dateTimeHtml}
-                ${event.location ? `<p class="text-sm text-gray-600 mt-2"><strong>Ubicación:</strong> ${event.location}</p>` : ''}
-              `;
-              
-              eventsGrid.appendChild(eventCard);
-            });
+            // Handle recurring events
+            if (recurringEvents.length > 0 && recurringSection && recurringGrid) {
+              recurringGrid.innerHTML = '';
+              recurringEvents.forEach((event: any) => {
+                recurringGrid.appendChild(createEventCard(event));
+              });
+              recurringSection.classList.remove('hidden');
+              if (recurringEmpty) recurringEmpty.classList.add('hidden');
+            } else {
+              if (recurringSection) recurringSection.classList.add('hidden');
+            }
+            
+            // Handle upcoming events
+            if (specialEvents.length > 0 && upcomingSection && upcomingGrid) {
+              upcomingGrid.innerHTML = '';
+              specialEvents.forEach((event: any) => {
+                upcomingGrid.appendChild(createEventCard(event));
+              });
+              upcomingSection.classList.remove('hidden');
+              if (upcomingEmpty) upcomingEmpty.classList.add('hidden');
+            } else {
+              if (upcomingSection) upcomingSection.classList.add('hidden');
+            }
           } else {
-            // No events
-            eventsGrid.classList.add('hidden');
+            // No events at all
+            if (recurringSection) recurringSection.classList.add('hidden');
+            if (upcomingSection) upcomingSection.classList.add('hidden');
             if (emptyState) emptyState.classList.remove('hidden');
             if (errorState) errorState.classList.add('hidden');
           }
         } catch (error) {
           console.error('Error fetching calendar events:', error);
           loadingState.classList.add('hidden');
-          eventsGrid.classList.add('hidden');
+          if (recurringSection) recurringSection.classList.add('hidden');
+          if (upcomingSection) upcomingSection.classList.add('hidden');
           if (emptyState) emptyState.classList.add('hidden');
           if (errorState) {
             errorState.classList.remove('hidden');
