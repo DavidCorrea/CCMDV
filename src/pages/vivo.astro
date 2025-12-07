@@ -10,7 +10,12 @@ const urlParams = new URLSearchParams(Astro.url.search);
 const demoMode = urlParams.get('demo') === 'true';
 ---
 
-<BaseLayout title={`${t.live.title} - ${t.site.name}`} description={t.live.title}>
+<BaseLayout 
+  title={`${t.live.title} - ${t.site.name}`} 
+  description={t.live.title}
+  image="/og-live.jpg"
+  type="video.other"
+>
   <div class="container mx-auto px-4 py-8 md:py-16">
     <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-8 text-center">
       {t.live.title}
