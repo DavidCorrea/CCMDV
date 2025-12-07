@@ -9,7 +9,7 @@ const t = getTranslations(lang);
 const currentPathname = Astro.url.pathname;
 ---
 
-<BaseLayout>
+<BaseLayout title={t.site.name}>
   <div class="container mx-auto px-4 py-8 md:py-16">
     <section class="text-center mb-12 md:mb-16">
       <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 px-4">

@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://ccmdv.com',
   base: '/',
+  output: 'static', // Ensure all pages are pre-rendered for social media crawlers
   adapter: netlify({
     edgeMiddleware: true,
   }),
