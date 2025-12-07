@@ -26,9 +26,10 @@ const showLanguageSwitcher = supportedLanguages.length > 1;
 // Build full URL for Open Graph image
 const siteUrl = Astro.site || 'https://ccmdv.com';
 const fullUrl = new URL(Astro.url.pathname, siteUrl).href;
+// Ensure OG image is always an absolute URL
 const ogImage = image 
   ? (image.startsWith('http') ? image : new URL(image, siteUrl).href)
-  : new URL('/og-image.jpg', siteUrl).href; // Default OG image
+  : `${siteUrl}/og-image.jpg`; // Default OG image - always absolute
 ---
 
 <!doctype html>

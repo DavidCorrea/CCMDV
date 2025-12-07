@@ -8,7 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://ccmdv.com',
   base: '/',
-  output: 'static', // Ensure all pages are pre-rendered for social media crawlers
+  // output mode is determined by adapter - Netlify adapter uses hybrid by default
   adapter: netlify({
     edgeMiddleware: true,
   }),
