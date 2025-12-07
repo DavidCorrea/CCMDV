@@ -4,9 +4,6 @@ import { getLangFromUrl } from '../i18n/utils';
 import { getTranslations } from '../i18n/translations';
 import { YouTubeContent } from '../components/YouTubeContent';
 
-// Explicitly pre-render this page so social media crawlers can read metadata
-export const prerender = true;
-
 const lang = getLangFromUrl(Astro.url);
 const t = getTranslations(lang);
 const urlParams = new URLSearchParams(Astro.url.search);
