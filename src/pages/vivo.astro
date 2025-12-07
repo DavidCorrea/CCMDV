@@ -4,74 +4,13 @@ import { getLangFromUrl } from '../i18n/utils';
 import { getTranslations } from '../i18n/translations';
 import { YouTubeContent } from '../components/YouTubeContent';
 
-// Make this page dynamic so metadata can be fetched at request time
-export const prerender = false;
-
 const lang = getLangFromUrl(Astro.url);
 const t = getTranslations(lang);
 const urlParams = new URLSearchParams(Astro.url.search);
 const demoMode = urlParams.get('demo') === 'true';
-
-// Fetch YouTube data server-side for metadata
-let ogTitle = `${t.live.title} - ${t.site.name}`;
-let ogDescription = t.live.title;
-let ogImage = '/og-live.jpg';
-let ogImageWidth = 1200;
-let ogImageHeight = 630;
-
-try {
-  // Build the API URL - use the site URL or fallback to localhost for dev
-  const siteUrl = Astro.site || 'https://ccmdv.com';
-  const apiUrl = demoMode 
-    ? `${siteUrl}/api/youtube-data?demo=true`
-    : `${siteUrl}/api/youtube-data`;
-  
-  // For local development, use the request URL
-  const requestUrl = new URL(Astro.url);
-  const localApiUrl = demoMode
-    ? `${requestUrl.origin}/api/youtube-data?demo=true`
-    : `${requestUrl.origin}/api/youtube-data`;
-  
-  // Try to fetch from the Edge Function
-  // In production, use siteUrl; in dev, use request origin
-  const fetchUrl = import.meta.env.PROD ? apiUrl : localApiUrl;
-  
-  const response = await fetch(fetchUrl, {
-    headers: {
-      'User-Agent': 'Astro-SSR',
-    },
-  });
-  
-  if (response.ok) {
-    const data = await response.json();
-    
-    // If there's a live stream, use its thumbnail and title for metadata
-    if (data.liveStream) {
-      ogTitle = `${data.liveStream.title} - ${t.site.name}`;
-      ogDescription = data.liveStream.description || data.liveStream.title;
-      
-      // Use maxresdefault for better OG image quality (1280x720)
-      // Fall back to hqdefault if maxresdefault doesn't exist
-      const videoId = data.liveStream.videoId;
-      ogImage = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-      ogImageWidth = 1280;
-      ogImageHeight = 720;
-    }
-  }
-} catch (error) {
-  // Silently fall back to defaults if fetch fails
-  console.error('Failed to fetch YouTube data for metadata:', error);
-}
 ---
 
-<BaseLayout 
-  title={ogTitle} 
-  description={ogDescription}
-  image={ogImage}
-  imageWidth={ogImageWidth}
-  imageHeight={ogImageHeight}
-  type="video.other"
->
+<BaseLayout title={`${t.live.title} - ${t.site.name}`}>
   <div class="container mx-auto px-4 py-8 md:py-16">
     <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-8 text-center">
       {t.live.title}

@@ -4,7 +4,7 @@ export const translations = {
   es: {
     site: {
       name: 'Manantial de Vida',
-      description: 'Un lugar de transformación para tu vida',
+      description: 'Un lugar de restauración para tu vida',
     },
     nav: {
       home: 'Inicio',

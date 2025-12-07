@@ -18,6 +18,8 @@ const lang = getLangFromUrl(Astro.url);
 const t = getTranslations(lang);
 const pageTitle = title || t.site.name;
 const pageDescription = description || t.site.description;
+// Social metadata always uses the standard description
+const socialDescription = `${t.site.name} - ${t.site.description}`;
 const currentPathname = Astro.url.pathname;
 const showLanguageSwitcher = supportedLanguages.length > 1;
 
@@ -35,7 +37,12 @@ const ogImage = image
     <meta charset="UTF-8" />
     <meta name="description" content={pageDescription} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Favicon for light theme -->
+    <link rel="icon" type="image/x-icon" href="/favicon-light.ico" media="(prefers-color-scheme: light)" />
+    <!-- Favicon for dark theme -->
+    <link rel="icon" type="image/x-icon" href="/favicon-dark.ico" media="(prefers-color-scheme: dark)" />
+    <!-- Fallback for browsers that don't support media queries -->
+    <link rel="icon" type="image/x-icon" href="/favicon-light.ico" />
     <meta name="generator" content={Astro.generator} />
     <title>{pageTitle}</title>
     
@@ -43,7 +50,7 @@ const ogImage = image
     <meta property="og:type" content={type} />
     <meta property="og:url" content={fullUrl} />
     <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={pageDescription} />
+    <meta property="og:description" content={socialDescription} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content={imageWidth.toString()} />
     <meta property="og:image:height" content={imageHeight.toString()} />
@@ -55,7 +62,7 @@ const ogImage = image
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content={fullUrl} />
     <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:description" content={socialDescription} />
     <meta name="twitter:image" content={ogImage} />
   </head>
   <body class="min-h-screen bg-white text-gray-900">
